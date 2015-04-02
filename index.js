@@ -42,7 +42,7 @@ exports.handler = function(event, context) {
     .then(function(result) {
       //TODO: could use an ignoreFails: true option
       return execute(result, {
-        shell: 'mkdir /tmp/downloaded;',
+        shell: 'mkdir -p /tmp/downloaded; ',
         logOutput: true
       });
     })
