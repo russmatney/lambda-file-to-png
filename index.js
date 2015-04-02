@@ -1,7 +1,9 @@
 var Q = require('q');
+var path = require('path');
 var execute = require('lambduh-execute');
 var transformS3Event = require('lambduh-transform-s3-event');
 var validate = require('lambduh-validate');
+var download = require('lambduh-get-s3-object');
 
 var pathToRenamePngs = './bin/rename-pngs.sh';
 var pathToFileToPng = "./bin/file-to-png.sh";
@@ -38,6 +40,13 @@ exports.handler = function(event, context) {
     })
 
     .then(function(result) {
+      //TODO: could use an ignoreFails: true option
+      return execute(result, {
+        shell: 'mkdir /tmp/downloaded;',
+        logOutput: true
+      });
+    })
+    .then(function(result) {
       //mkdir /tmp/downloaded/, clear if it exists
       return download(result, {
         srcKey: result.srcKey,
@@ -48,13 +57,13 @@ exports.handler = function(event, context) {
 
     .then(function(result) {
       //prep binary to be called (on lambda)
-      if(!result.downloadFilePath) {
-        throw new Error('result expected downloadFilePath');
+      if(!result.downloadFilepath) {
+        throw new Error('result expected downloadFilepath');
       }
       return execute(result, {
         bashScript: pathToFileToPng,
         bashParams: [
-          result.downloadFilePath
+          result.downloadFilepath
         ],
         logOutput: true
       });

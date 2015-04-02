@@ -10,9 +10,23 @@ describe('files-to-png-zip handler', function() {
     expect(index.handler).to.be.a('function');
   });
 
+  it('should fail when a bad event is handed in', function(done) {
+    var event = {};
+    var context = {
+      done: function(err, message) {
+        if (err || message) {
+          done();
+        } else {
+          done(new Error('expected error message'));
+        }
+      }
+    }
+    index.handler(event, context);
+  });
+
   it.only('should call .done() when things go well', function(done) {
     this.timeout(50000);
-    var event = {};
+    var event = require('./test-input.json')
     var context = {
       done: function(err, message) {
         if (err || message) {

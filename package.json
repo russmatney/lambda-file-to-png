@@ -21,6 +21,9 @@
   },
   "dependencies": {
     "lambduh-execute": "^1.2.0",
+    "lambduh-get-s3-object": "^1.0.0",
+    "lambduh-transform-s3-event": "^1.0.1",
+    "lambduh-validate": "^1.1.0",
     "q": "^1.2.0"
   }
 }
