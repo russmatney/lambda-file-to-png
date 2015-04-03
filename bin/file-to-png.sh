@@ -9,5 +9,5 @@ echo "baseFileName: " $baseFileName
 convert $1 -background white \
   -gravity center \
   -scale 720 -extent 1280x720 \
-  PNG24:/tmp/work/$baseFileName.png
+  PNG24:$2$baseFileName".png"
 
