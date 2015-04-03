@@ -13,19 +13,19 @@ var pathToFileToPng = "./bin/file-to-png.sh";
 var pathToFilesToPngs = "./bin/files-to-pngs.sh";
 
 exports.handler = function(event, context) {
+
   // gif or jpg has just been uploaded - is specifed in event
-  //
+
   // Create timelapse func will use these 3 steps as well:
   //   download all "pngs_for_timelapse_zip_[timestamp]" zips for the key
   //   unpack them all
   //   mv them all to shared folder (merge)
-  //
+
   // convert gif/jpg into pngs
   // zip 'merge' folder
   // upload as new zip[timestamp]
   // delete whatever "zip_[timestamp]" were downloaded
 
-  var start = new Date();
   var result = {};
 
   transformS3Event(result, event)
@@ -96,6 +96,14 @@ exports.handler = function(event, context) {
         }
       });
       return def.promise;
+    })
+
+    // clean up
+    .then(function(result) {
+      return execute(result, {
+        shell: "rm /tmp/downloads/*; rm /tmp/uploads/*",
+        logOutput: true
+      });
     })
 
     .then(function(result) {
