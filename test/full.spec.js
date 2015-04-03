@@ -39,7 +39,7 @@ describe('files-to-png-zip handler', function() {
   });
 
   it.only('should call .done() when things go well', function(done) {
-    this.timeout(50000);
+    this.timeout(15000);
     var event = require('./test-input.json')
     var context = {
       done: function(err, message) {
