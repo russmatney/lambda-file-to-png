@@ -3,7 +3,7 @@
 echo "Processing file: " $1
 
 baseFileName=`basename $1`
-baseFileName=${baseFileName:0:4}
+baseFileName=${baseFileName%????} #remove extension
 echo "baseFileName: " $baseFileName
 
 convert $1 -background white \

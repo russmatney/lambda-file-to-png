@@ -32,7 +32,7 @@ exports.handler = function(event, context) {
       console.log(result);
       return validate(result, {
         "srcKey": {
-          endsWith: "\\.gif",
+          endsWith: "\\.(jpg|gif)",
           endsWithout: "_\\d+\\.gif",
           startsWith: "events/"
         }
@@ -40,14 +40,12 @@ exports.handler = function(event, context) {
     })
 
     .then(function(result) {
-      //TODO: could use an ignoreFails: true option
       return execute(result, {
         shell: 'mkdir -p /tmp/downloaded; ',
         logOutput: true
       });
     })
     .then(function(result) {
-      //mkdir /tmp/downloaded/, clear if it exists
       return download(result, {
         srcKey: result.srcKey,
         srcBucket: result.srcBucket,
