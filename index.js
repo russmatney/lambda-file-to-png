@@ -8,28 +8,11 @@ var validate = require('lambduh-validate');
 var download = require('lambduh-get-s3-object');
 var upload = require('lambduh-put-s3-object');
 
-var pathToRenamePngs = './bin/rename-pngs.sh';
-var pathToFileToPng = "./bin/file-to-png.sh";
-var pathToFilesToPngs = "./bin/files-to-pngs.sh";
-
 exports.handler = function(event, context) {
-
-  // gif or jpg has just been uploaded - is specifed in event
-
-  // Create timelapse func will use these 3 steps as well:
-  //   download all "pngs_for_timelapse_zip_[timestamp]" zips for the key
-  //   unpack them all
-  //   mv them all to shared folder (merge)
-
-  // convert gif/jpg into pngs
-  // zip 'merge' folder
-  // upload as new zip[timestamp]
-  // delete whatever "zip_[timestamp]" were downloaded
-
   var result = {};
 
+  //prep event, validate it
   transformS3Event(result, event)
-
     .then(function(result) {
       console.log('Validating S3 event.');
       console.log(result);
@@ -42,13 +25,15 @@ exports.handler = function(event, context) {
       });
     })
 
+    // create /tmp/downloads, /tmp/uploads
     .then(function(result) {
       return execute(result, {
-        //TODO: clear uploads dir
         shell: 'mkdir -p /tmp/downloads; mkdir -p /tmp/uploads;',
         logOutput: true
       });
     })
+
+    //download file to /tmp/downloads/
     .then(function(result) {
       return download(result, {
         srcKey: result.srcKey,
@@ -57,13 +42,18 @@ exports.handler = function(event, context) {
       });
     })
 
+    //prep file-to-png script, convert file to png
     .then(function(result) {
-      //prep binary to be called (on lambda)
+      return execute(result, {
+        shell: "cp /var/task/file-to-png.sh /tmp/.; chmod 755 /tmp/file-to-png.sh;"
+      });
+    })
+    .then(function(result) {
       if(!result.downloadFilepath) {
         throw new Error('result expected downloadFilepath');
       }
       return execute(result, {
-        bashScript: pathToFileToPng,
+        bashScript: '/tmp/file-to-png.sh',
         bashParams: [
           result.downloadFilepath, //file to process
           "/tmp/uploads/" //processed file destination
@@ -72,6 +62,7 @@ exports.handler = function(event, context) {
       });
     })
 
+    //upload files in /tmp/uploads/**.png to s3
     .then(function(result) {
       var def = Q.defer();
       glob("/tmp/uploads/**.png", function(err, files) {
