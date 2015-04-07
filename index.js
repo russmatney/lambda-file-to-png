@@ -47,7 +47,7 @@ exports.handler = function(event, context) {
   //download file to /tmp/downloads/
   .then(function(result) {
     return download(result, {
-      srcKey: ogSrcKey
+      srcKey: ogSrcKey,
       srcBucket: result.srcBucket,
       downloadFilepath: '/tmp/downloads/' + path.basename(ogSrcKey)
     });
