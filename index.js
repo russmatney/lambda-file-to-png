@@ -18,7 +18,7 @@ exports.handler = function(event, context) {
   validate(result, {
     "srcKey": {
       endsWith: "\\.(jpg|gif)",
-      endsWithout: "_\\d+\\.gif"
+      endsWithout: "(_\\d+\\.gif|endcard\\.jpg)"
     },
     "srcBucket": true,
     "dstBucket": true,
