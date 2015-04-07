@@ -3,7 +3,6 @@ var path = require('path');
 var glob = require('glob');
 
 var execute = require('lambduh-execute');
-var transformS3Event = require('lambduh-transform-s3-event');
 var validate = require('lambduh-validate');
 var download = require('lambduh-get-s3-object');
 var upload = require('lambduh-put-s3-object');
@@ -12,8 +11,7 @@ exports.handler = function(event, context) {
   var result = event;
 
   //validate event
-  console.log('Validating event.');
-  console.log(result);
+  //TODO: stricter validation
   validate(result, {
     "srcKey": {
       endsWith: "\\.(jpg|gif)",
@@ -62,13 +60,10 @@ exports.handler = function(event, context) {
       if(err) { def.reject(err) }
       else {
         var promises = [];
-        console.log('files to upload:');
-        console.log(files);
         files.forEach(function(file) {
           promises.push(upload(result, {
             dstBucket: result.srcBucket,
-            //TODO: abstract into orchestrator input
-            dstKey: path.dirname(result.srcKey) + '/timelapse/' + path.basename(file),
+            dstKey: result.dstKeyDir + path.basename(file),
             uploadFilepath: file
           }));
         });
