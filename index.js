@@ -44,7 +44,7 @@ exports.handler = function(event, context) {
     return download(result, {
       srcKey: result.watermarkKey,
       srcBucket: result.srcBucket,
-      downloadFilepath: '/tmp/watermark.png
+      downloadFilepath: '/tmp/watermark.png'
     });
   })
 
