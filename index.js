@@ -18,7 +18,8 @@ exports.handler = function(event, context) {
     },
     "srcBucket": true,
     "dstBucket": true,
-    "dstKey": true
+    "dstKeyDir": true,
+    "watermarkKey": true
   })
 
   // create /tmp/downloads, /tmp/uploads
@@ -38,7 +39,16 @@ exports.handler = function(event, context) {
     });
   })
 
-  //prep file-to-png script, convert file to png
+  //download watermark to /tmp/watermark.png
+  .then(function(result) {
+    return download(result, {
+      srcKey: result.watermarkKey,
+      srcBucket: result.srcBucket,
+      downloadFilepath: '/tmp/watermark.png
+    });
+  })
+
+  //convert file to png, add watermark
   .then(function(result) {
     if(!result.downloadFilepath) {
       throw new Error('result expected downloadFilepath');
@@ -46,6 +56,7 @@ exports.handler = function(event, context) {
     return execute(result, {
       bashScript: '/var/task/file-to-png',
       bashParams: [
+        //TODO: param, code in script for watermark
         result.downloadFilepath, //file to process
         "/tmp/uploads/" //processed file destination
       ],
