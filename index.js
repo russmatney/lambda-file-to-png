@@ -10,11 +10,15 @@ var upload = require('lambduh-put-s3-object');
 exports.handler = function(event, context) {
   var result = event;
 
+  //TODO: fix bug, don't use workaround
+  var ogSrcKey = result.srcKey;
+
   //validate event
   //TODO: stricter validation
   validate(result, {
     "srcKey": {
       endsWith: "\\.(jpg|gif)",
+      endsWithout: "_\\d+\\.gif"
     },
     "srcBucket": true,
     "dstBucket": true,
@@ -30,21 +34,22 @@ exports.handler = function(event, context) {
     });
   })
 
-  //download file to /tmp/downloads/
-  .then(function(result) {
-    return download(result, {
-      srcKey: result.srcKey,
-      srcBucket: result.srcBucket,
-      downloadFilepath: '/tmp/downloads/' + path.basename(result.srcKey)
-    });
-  })
-
   //download watermark to /tmp/watermark.png
   .then(function(result) {
     return download(result, {
+      //TODO: big old bug here. - srcKey is used later, but overwritten in these download plugins
       srcKey: result.watermarkKey,
       srcBucket: result.srcBucket,
       downloadFilepath: '/tmp/watermark.png'
+    });
+  })
+
+  //download file to /tmp/downloads/
+  .then(function(result) {
+    return download(result, {
+      srcKey: ogSrcKey
+      srcBucket: result.srcBucket,
+      downloadFilepath: '/tmp/downloads/' + path.basename(ogSrcKey)
     });
   })
 
