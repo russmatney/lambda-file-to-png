@@ -1,68 +1,80 @@
 var Q = require('q');
 var path = require('path');
 var glob = require('glob');
+var fs = require('fs');
+var req = require('request');
 
 var execute = require('lambduh-execute');
 var validate = require('lambduh-validate');
-var download = require('lambduh-get-s3-object');
 var upload = require('lambduh-put-s3-object');
 
+var downloadExternalFile = function(url, dest, cb) {
+  var file = fs.createWriteStream(dest);
+  file.on('finish', function() {
+    file.close(cb);  // close() is async, call cb after close completes.
+  });
+  file.on('error', function(err) { // Handle errors
+    fs.unlink(dest); // Delete the file async. (But we don't check the result)
+    if (cb) cb(err.message);
+  });
+  req(url).pipe(file);
+};
+
 exports.handler = function(event, context) {
-  var result = event;
-
-  //TODO: fix bug, don't use workaround
-  var ogSrcKey = result.srcKey;
-
   //validate event
-  //TODO: stricter validation
-  validate(result, {
-    "srcKey": {
-      endsWith: "\\.(jpg|gif)",
-      endsWithout: "(_\\d+\\.gif|endcard\\.jpg)"
-    },
-    "srcBucket": true,
-    "dstBucket": true,
-    "dstKeyDir": true,
-    "watermarkKey": true
+  validate(event, {
+    "srcUrl": true,
+    "destBucket": true,
+    "pngsDir": true,
+    "watermarkUrl": true
+  })
+
+  .then(function(event) {
+    event.fileDownloadPath = "/tmp/downloads/" + path.basename(event.srcUrl);
+    return event;
   })
 
   // create /tmp/downloads, /tmp/uploads
-  .then(function(result) {
-    return execute(result, {
+  .then(function(event) {
+    return execute(event, {
       shell: 'mkdir -p /tmp/downloads; mkdir -p /tmp/uploads;',
       logOutput: true
     });
   })
 
   //download watermark to /tmp/watermark.png
-  .then(function(result) {
-    return download(result, {
-      //TODO: big old bug here. - srcKey is used later, but overwritten in these download plugins
-      srcKey: result.watermarkKey,
-      srcBucket: result.srcBucket,
-      downloadFilepath: '/tmp/watermark.png'
+  .then(function(event) {
+    var def = Q.defer();
+    downloadExternalFile(event.watermarkUrl, "/tmp/watermark.png", function(err) {
+      if (err) {
+        def.reject(err);
+      } else {
+        def.resolve(event);
+      }
     });
+    return def.promise;
   })
 
   //download file to /tmp/downloads/
-  .then(function(result) {
-    return download(result, {
-      srcKey: ogSrcKey,
-      srcBucket: result.srcBucket,
-      downloadFilepath: '/tmp/downloads/' + path.basename(ogSrcKey)
+  .then(function(event) {
+    var def = Q.defer();
+    downloadExternalFile(event.srcUrl, event.fileDownloadPath, function(err) {
+      if (err) {
+        def.reject(err);
+      } else {
+        def.resolve(event);
+      }
     });
+    return def.promise;
   })
 
   //convert file to png, add watermark
-  .then(function(result) {
-    if(!result.downloadFilepath) {
-      throw new Error('result expected downloadFilepath');
-    }
-    return execute(result, {
+  .then(function(event) {
+    return execute(event, {
       bashScript: '/var/task/file-to-png',
       bashParams: [
         //TODO: param, code in script for watermark
-        result.downloadFilepath, //file to process
+        event.fileDownloadPath, //file to process
         "/tmp/uploads/" //processed file destination
       ],
       logOutput: true
@@ -70,16 +82,16 @@ exports.handler = function(event, context) {
   })
 
   //upload files in /tmp/uploads/**.png to s3
-  .then(function(result) {
+  .then(function(event) {
     var def = Q.defer();
     glob("/tmp/uploads/**.png", function(err, files) {
       if(err) { def.reject(err) }
       else {
         var promises = [];
         files.forEach(function(file) {
-          promises.push(upload(result, {
-            dstBucket: result.srcBucket,
-            dstKey: result.dstKeyDir + path.basename(file),
+          promises.push(upload(event, {
+            dstBucket: event.destBucket,
+            dstKey: event.pngsDir + path.basename(file),
             uploadFilepath: file
           }));
         });
@@ -96,15 +108,7 @@ exports.handler = function(event, context) {
     return def.promise;
   })
 
-  // clean up
-  .then(function(result) {
-    return execute(result, {
-      shell: "rm /tmp/downloads/*; rm /tmp/uploads/*",
-      logOutput: true
-    });
-  })
-
-  .then(function(result) {
+  .then(function(event) {
     context.done()
   }).fail(function(err) {
     if(err) {

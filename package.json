@@ -1,5 +1,5 @@
 {
-  "name": "bosco.files-to-png-zip",
+  "name": "bosco.file-to-png",
   "version": "1.0.0",
   "description": "lambda function converting a file (.gif/.jpg) to a png, then zipping and uploading",
   "main": "index.js",
@@ -25,6 +25,7 @@
     "lambduh-get-s3-object": "^1.0.0",
     "lambduh-put-s3-object": "^1.0.0",
     "lambduh-validate": "^1.1.0",
-    "q": "^1.2.0"
+    "q": "^1.2.0",
+    "request": "^2.55.0"
   }
 }
