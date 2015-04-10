@@ -73,9 +73,9 @@ exports.handler = function(event, context) {
     return execute(event, {
       bashScript: '/var/task/file-to-png',
       bashParams: [
-        //TODO: param, code in script for watermark
         event.fileDownloadPath, //file to process
-        "/tmp/uploads/" //processed file destination
+        "/tmp/uploads/", //processed file destination
+        "/tmp/watermark.png" //watermark location
       ],
       logOutput: true
     });
@@ -91,7 +91,7 @@ exports.handler = function(event, context) {
         files.forEach(function(file) {
           promises.push(upload(event, {
             dstBucket: event.destBucket,
-            dstKey: event.pngsDir + path.basename(file),
+            dstKey: event.pngsDir + "/" + path.basename(file),
             uploadFilepath: file
           }));
         });
