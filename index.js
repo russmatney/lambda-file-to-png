@@ -25,8 +25,7 @@ exports.handler = function(event, context) {
   validate(event, {
     "srcUrl": true,
     "destBucket": true,
-    "pngsDir": true,
-    "watermarkUrl": true
+    "pngsDir": true
   })
 
   .then(function(event) {
@@ -44,15 +43,19 @@ exports.handler = function(event, context) {
 
   //download watermark to /tmp/watermark.png
   .then(function(event) {
-    var def = Q.defer();
-    downloadExternalFile(event.watermarkUrl, "/tmp/watermark.png", function(err) {
-      if (err) {
-        def.reject(err);
-      } else {
-        def.resolve(event);
-      }
-    });
-    return def.promise;
+    if (event.watermarkUrl) {
+      var def = Q.defer();
+      downloadExternalFile(event.watermarkUrl, "/tmp/watermark.png", function(err) {
+        if (err) {
+          def.reject(err);
+        } else {
+          def.resolve(event);
+        }
+      });
+      return def.promise;
+    } else {
+      return event;
+    }
   })
 
   //download file to /tmp/downloads/
@@ -82,16 +85,19 @@ exports.handler = function(event, context) {
 
   //add watermark
   .then(function(event) {
-    return execute(event, {
-      bashScript: '/var/task/watermark',
-      bashParams: [
-        "/tmp/uploads/*.png", //files to process
-        "/tmp/watermark.png" //watermark location
-      ],
-      logOutput: true
-    });
+    if (event.watermarkUrl) {
+      return execute(event, {
+        bashScript: '/var/task/watermark',
+        bashParams: [
+          "/tmp/uploads/*.png", //files to process
+          "/tmp/watermark.png" //watermark location
+        ],
+        logOutput: true
+      });
+    } else {
+      return event;
+    }
   })
-
 
   //upload files in /tmp/uploads/**.png to s3
   .then(function(event) {
