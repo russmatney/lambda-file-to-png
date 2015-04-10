@@ -68,18 +68,30 @@ exports.handler = function(event, context) {
     return def.promise;
   })
 
-  //convert file to png, add watermark
+  //convert file to png
   .then(function(event) {
     return execute(event, {
       bashScript: '/var/task/file-to-png',
       bashParams: [
         event.fileDownloadPath, //file to process
-        "/tmp/uploads/", //processed file destination
+        "/tmp/uploads/" //processed file destination
+      ],
+      logOutput: true
+    });
+  })
+
+  //add watermark
+  .then(function(event) {
+    return execute(event, {
+      bashScript: '/var/task/watermark',
+      bashParams: [
+        "/tmp/uploads/*.png", //files to process
         "/tmp/watermark.png" //watermark location
       ],
       logOutput: true
     });
   })
+
 
   //upload files in /tmp/uploads/**.png to s3
   .then(function(event) {

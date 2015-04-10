@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# add watermark
+for f in $1; do
+  echo "watermarking $f"
+  if [ -f $2 ]; then
+    convert $2 -scale 720 $2
+    composite $2 -geometry +280+0 $f $f
+  fi
+done

@@ -11,10 +11,3 @@ convert $1 -background white \
   -scale 720 -extent 1280x720 \
   PNG24:$2$baseFileName".png"
 
-# add watermark
-for f in $2; do
-  if [ -f $3 ]; then
-    convert $3 -scale 720 $3
-    composite $3 -geometry +280+0 $f $f
-  fi
-done
