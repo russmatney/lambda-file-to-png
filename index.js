@@ -31,10 +31,9 @@ exports.handler = function(event, context) {
   //download watermark to /tmp/watermark.png
   .then(function(event) {
     if (event.watermarkUrl) {
-      return downloadFile({
-        filepath: "/tmp/watermark.png",
-        url: event.watermarkUrl
-      })
+      event.filepath = "/tmp/watermark.png";
+      event.url = event.watermarkUrl;
+      return downloadFile(event);
     } else {
       return event;
     }
@@ -42,10 +41,9 @@ exports.handler = function(event, context) {
 
   //download file to /tmp/downloads/
   .then(function(event) {
-    return downloadFile({
-      url: event.srcUrl,
-      filepath: event.fileDownloadPath,
-    });
+    event.filepath = event.fileDownloadPath;
+    event.url = event.srcUrl;
+    return downloadFile(event);
   })
 
   //convert file to png
