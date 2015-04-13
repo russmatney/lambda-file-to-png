@@ -1,24 +1,11 @@
 var Q = require('q');
 var path = require('path');
 var glob = require('glob');
-var fs = require('fs');
-var req = require('request');
 
 var execute = require('lambduh-execute');
 var validate = require('lambduh-validate');
 var upload = require('lambduh-put-s3-object');
-
-var downloadExternalFile = function(url, dest, cb) {
-  var file = fs.createWriteStream(dest);
-  file.on('finish', function() {
-    file.close(cb);  // close() is async, call cb after close completes.
-  });
-  file.on('error', function(err) { // Handle errors
-    fs.unlink(dest); // Delete the file async. (But we don't check the result)
-    if (cb) cb(err.message);
-  });
-  req(url).pipe(file);
-};
+var downloadFile = require('lambduh-download-file');
 
 exports.handler = function(event, context) {
   //validate event
@@ -44,15 +31,10 @@ exports.handler = function(event, context) {
   //download watermark to /tmp/watermark.png
   .then(function(event) {
     if (event.watermarkUrl) {
-      var def = Q.defer();
-      downloadExternalFile(event.watermarkUrl, "/tmp/watermark.png", function(err) {
-        if (err) {
-          def.reject(err);
-        } else {
-          def.resolve(event);
-        }
-      });
-      return def.promise;
+      return downloadFile({
+        filepath: "/tmp/watermark.png",
+        url: event.watermarkUrl
+      })
     } else {
       return event;
     }
@@ -60,15 +42,10 @@ exports.handler = function(event, context) {
 
   //download file to /tmp/downloads/
   .then(function(event) {
-    var def = Q.defer();
-    downloadExternalFile(event.srcUrl, event.fileDownloadPath, function(err) {
-      if (err) {
-        def.reject(err);
-      } else {
-        def.resolve(event);
-      }
+    return downloadFile({
+      url: event.srcUrl,
+      filepath: event.fileDownloadPath,
     });
-    return def.promise;
   })
 
   //convert file to png
