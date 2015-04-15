@@ -1,7 +1,8 @@
 module.exports = {
-  region: 'us-east-1',
-  handler: 'index.handler',
-  role: 'arn:aws:iam::106586740595:role/executionrole',
-  functionName: 'file-to-png',
-  timeout: 45
+  FunctionName: 'file-to-png',
+  Handler: 'index.handler',
+  Role: 'arn:aws:iam::106586740595:role/executionrole',
+  Region: 'us-east-1',
+  Runtime: 'nodejs',
+  Timeout: 45
 }
