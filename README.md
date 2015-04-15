@@ -17,9 +17,11 @@ Invoke this function like any lambda function, as documented in the aws sdk.
 
 ## required
 
-- `` - 
-- `` - 
-- `` - 
-- `` - 
+- `srcUrl` - URL to the .jpg or .gif file
+- `destBucket` - S3 bucket for the created pngs
+- `pngsDir` - S3 prefix/folder for the created pngs
 
+## optional
+
+- `watermarkUrl` - URL for a .png watermark to download and apply to each .png
 
